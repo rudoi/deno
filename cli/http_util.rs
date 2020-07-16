@@ -24,9 +24,17 @@ use std::task::Poll;
 use tokio::io::AsyncRead;
 use url::Url;
 
+#[derive(Deserialize)]
+pub struct HttpAgentOptions {
+  ca: Option<String>,
+  cert: Option<String>,
+  key: Option<String>,
+  rejectUnauthorized: bool,
+}
+
 /// Create new instance of async reqwest::Client. This client supports
 /// proxies and doesn't follow redirects.
-pub fn create_http_client(ca_file: Option<String>) -> Result<Client, ErrBox> {
+pub fn create_http_client(options: HttpAgentOptions) -> Result<Client, ErrBox> {
   let mut headers = HeaderMap::new();
   headers.insert(
     USER_AGENT,
@@ -37,11 +45,26 @@ pub fn create_http_client(ca_file: Option<String>) -> Result<Client, ErrBox> {
     .default_headers(headers)
     .use_rustls_tls();
 
-  if let Some(ca_file) = ca_file {
-    let mut buf = Vec::new();
-    File::open(ca_file)?.read_to_end(&mut buf)?;
-    let cert = reqwest::Certificate::from_pem(&buf)?;
+  if let Some(ca) = options.ca {
+    let cert = reqwest::Certificate::from_pem(ca.as_bytes())?;
     builder = builder.add_root_certificate(cert);
+  }
+
+  if let Some(cert) = options.cert {
+    if let Some(key) = options.key {
+      let identity =
+        reqwest::Identity::from_pem([cert, key].concat().as_bytes())?;
+      builder = builder.identity(identity)
+    } else {
+      ErrBox::from(io::Error::new(
+        io::ErrorKind::Other,
+        "Cert provided without key".to_string(),
+      ))
+    }
+  }
+
+  if let Some(rejectUnauthorized) = options.rejectUnauthorized {
+    builder = builder.danger_accept_invalid_certs(rejectUnauthorized);
   }
 
   builder.build().map_err(|_| {

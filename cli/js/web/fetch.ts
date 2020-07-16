@@ -13,6 +13,7 @@ import * as Body from "./body.ts";
 import { getHeaderValueParams } from "./util.ts";
 import { ReadableStreamImpl } from "./streams/readable_stream.ts";
 import { MultipartBuilder } from "./fetch/multipart.ts";
+import { HttpAgent, HTTPAgent } from "../http_agent.ts";
 
 const NULL_BODY_STATUS = [101, 204, 205, 304];
 const REDIRECT_STATUS = [301, 302, 303, 307, 308];
@@ -171,6 +172,7 @@ function sendFetchReq(
   method: string | null,
   headers: Headers | null,
   body: ArrayBufferView | undefined,
+  agent?: HTTPAgent,
 ): Promise<FetchResponse> {
   let headerArray: Array<[string, string]> = [];
   if (headers) {
@@ -181,6 +183,7 @@ function sendFetchReq(
     method,
     url,
     headers: headerArray,
+    agent,
   };
 
   return opFetch(args, body);
@@ -189,6 +192,7 @@ function sendFetchReq(
 export async function fetch(
   input: (domTypes.Request & { _bodySource?: unknown }) | URL | string,
   init?: domTypes.RequestInit,
+  agent?: HttpAgent,
 ): Promise<Response> {
   let url: string;
   let method: string | null = null;

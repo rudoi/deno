@@ -1881,6 +1881,22 @@ declare namespace Deno {
     kill(signo: number): void;
   }
 
+  export interface HTTPAgentOptions {
+    ca: String;
+    cert: String;
+    key: String;
+    rejectUnauthorized: Boolean;
+  }
+
+  export class HTTPAgent {
+    readonly ca: String;
+    readonly cert: String;
+    readonly key: String;
+    readonly rejectUnauthorized: boolean;
+
+    constructor(options: HTTPAgentOptions);
+  }
+
   export type ProcessStatus =
     | {
       success: true;

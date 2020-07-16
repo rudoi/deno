@@ -1,7 +1,7 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 use super::dispatch_json::{Deserialize, JsonOp, Value};
 use super::io::{StreamResource, StreamResourceHolder};
-use crate::http_util::{create_http_client, HttpBody};
+use crate::http_util::{create_http_client, HttpAgentOptions, HttpBody};
 use crate::op_error::OpError;
 use crate::state::State;
 use deno_core::CoreIsolate;
@@ -22,6 +22,7 @@ struct FetchArgs {
   method: Option<String>,
   url: String,
   headers: Vec<(String, String)>,
+  agent: Option<HttpAgentOptions>,
 }
 
 pub fn op_fetch(
